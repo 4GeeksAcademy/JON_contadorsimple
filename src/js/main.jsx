@@ -1,18 +1,13 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import React from 'react';                                // 1. React para JSX
+import ReactDOM from 'react-dom/client';                  // 2. API de React 18 para montar
+import CounterApp from './components/CounterApp.jsx';     // 3. Nuestro componente raíz
 
-//Bootstrap
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap"
+// 4. Creamos la “raíz” de React sobre <div id="root">
+const root = ReactDOM.createRoot(document.getElementById('root'));
 
-// index.css'
-import '../styles/index.css'
-
-// components
-import Home from './components/Home';
-
-ReactDOM.createRoot(document.getElementById('root')).render(
+// 5. Montamos <CounterApp /> dentro de <StrictMode> para buenas prácticas
+root.render(
   <React.StrictMode>
-    <Home/>
-  </React.StrictMode>,
-)
+    <CounterApp />
+  </React.StrictMode>
+);
