@@ -1,71 +1,58 @@
-import React, { useState, useRef, useEffect } from 'react';  // 1. Hooks de React
-import Home from './Home.jsx';                               // 2. Componente de bienvenida
-import SecondsCounter from './SecondsCounter.jsx';           // 3. Componente visual del contador
+import React, { useState, useRef, useEffect } from 'react'; // 1. Hooks de React
+import SecondsCounter from './SecondsCounter.jsx';           // 2. Componente de UI que solo muestra icono + dígitos
 
-export default function CounterApp() {
-  // 4. Estado para los segundos actuales (positivo o regresivo)
+export default function CounterApp() {                       // 3. Componente principal
+  // 4. Segundos actuales que muestra el contador
   const [seconds, setSeconds] = useState(0);
-
-  // 5. Estado para guardar valor inicial (útil al reiniciar)
+  // 5. Valor inicial para poder "Reiniciar" al mismo punto
   const [initial, setInitial] = useState(0);
-
-  // 6. Estado controlado para input de cuenta regresiva
+  // 6. Input controlado para cuenta regresiva (si el usuario quiere)
   const [inputValue, setInputValue] = useState('');
-
-  // 7. Estado controlado para input de tiempo de alerta
+  // 7. Input controlado para lanzar alerta a cierto segundo
   const [alertTime, setAlertTime] = useState('');
-
-  // 8. Referencia al intervalo (para poder pararlo)
+  // 8. Referencia al ID de setInterval, para detenerlo después
   const intervalRef = useRef(null);
 
-  // 9. useEffect se ejecuta al montar el componente
-  useEffect(() => {
-    // 9.1. Inicializamos el contador normal desde la carga de la página
-    setSeconds(Math.floor((Date.now() - window.pageLoadTime) / 1000));
-    // 9.2. Al desmontar, limpiamos el intervalo
-    return () => clearInterval(intervalRef.current);
-  }, []);
-
   /**
-   * 10. Función que inicia o reinicia el contador:
-   *     - Si hay un valor en inputValue, hace cuenta regresiva desde ese valor.
-   *     - Si no, cuenta hacia adelante desde pageLoadTime.
-   *     - Cada segundo:
-   *         • Actualiza el estado `seconds`
-   *         • Lanza alerta si `seconds === alertTime`
-   *         • Detiene el intervalo si la cuenta regresiva llega a 0
+   * 9. startCount: arranca o reinicia la lógica del contador
+   *    - Si inputValue tiene un número → cuenta regresiva
+   *    - Si está vacío → contador hacia adelante desde 0
    */
   const startCount = () => {
+    // 9.1 Detenemos cualquier intervalo previo
     clearInterval(intervalRef.current);
+
     let isCountdown = false;
     let startVal;
 
     if (inputValue.trim() !== '') {
-      // 10.1. Configurar cuenta regresiva
+      // 9.2 Configuramos cuenta regresiva
       startVal = parseInt(inputValue, 10);
       if (isNaN(startVal) || startVal < 0) {
         alert('Introduce un número válido ≥ 0.');
         return;
       }
-      isCountdown = true;
-      setInitial(startVal);
-      setSeconds(startVal);
+      isCountdown = true;         // modo regresivo
+      setInitial(startVal);       // guardamos para reiniciar
+      setSeconds(startVal);       // arrancamos desde ese valor
     } else {
-      // 10.2. Contador normal
-      startVal = Math.floor((Date.now() - window.pageLoadTime) / 1000);
-      setSeconds(startVal);
+      // 9.3 Modo contador normal: siempre desde cero
+      startVal = 0;
+      setInitial(0);
+      setSeconds(0);
     }
 
-    // 10.3. Creamos un intervalo que actualiza cada segundo
+    // 9.4 Creamos un intervalo que actualiza cada segundo
     intervalRef.current = setInterval(() => {
       setSeconds(prev => {
+        // calculamos siguiente valor (+1 o –1)
         const next = isCountdown ? prev - 1 : prev + 1;
 
-        // 10.4. Alerta si coincide con alertTime
+        // 9.5 Alerta si llega al segundo deseado
         if (alertTime && next === parseInt(alertTime, 10)) {
           alert(`¡Tiempo alcanzado: ${alertTime} segundos!`);
         }
-        // 10.5. Si es regresiva y llega a 0, detenemos
+        // 9.6 Si es regresiva y llega a 0, detenemos
         if (isCountdown && next <= 0) {
           clearInterval(intervalRef.current);
         }
@@ -74,20 +61,24 @@ export default function CounterApp() {
     }, 1000);
   };
 
-  // 11. Funciones para controlar el intervalo
+  // 10. Auto-arranca el contador al montar el componente
+  useEffect(() => {
+    startCount();
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  // 11. Controles de pausa, reinicio y reanudar
   const pauseCount  = () => clearInterval(intervalRef.current);
   const resetCount  = () => { clearInterval(intervalRef.current); setSeconds(initial); };
   const resumeCount = () => startCount();
 
+  // 12. Renderizado de la UI
   return (
-    <div className="container text-center text-white">
-      {/* 12. Componente de bienvenida */}
-      <Home />
-
-      {/* 13. Barra del contador */}
+    <div className="container text-center text-white py-5">
+      {/* 12.1 Muestra el cronómetro visual */}
       <SecondsCounter seconds={seconds} />
 
-      {/* 14. Controles (inputs) */}
+      {/* 12.2 Inputs para configurar regresiva y alerta */}
       <div className="row justify-content-center mt-4">
         <div className="col-auto">
           <label className="form-label">
@@ -117,12 +108,12 @@ export default function CounterApp() {
         </div>
       </div>
 
-      {/* 15. Botones de control */}
+      {/* 12.3 Botones de control */}
       <div className="btn-group mt-3" role="group">
-        <button className="btn btn-primary"   onClick={startCount}> Iniciar   </button>
-        <button className="btn btn-secondary" onClick={pauseCount}> Parar     </button>
-        <button className="btn btn-success"   onClick={resumeCount}>Reanudar  </button>
-        <button className="btn btn-danger"    onClick={resetCount}> Reiniciar</button>
+        <button className="btn btn-primary"   onClick={startCount}>   Iniciar   </button>
+        <button className="btn btn-secondary" onClick={pauseCount}>   Parar     </button>
+        <button className="btn btn-success"   onClick={resumeCount}>  Reanudar  </button>
+        <button className="btn btn-danger"    onClick={resetCount}>   Reiniciar </button>
       </div>
     </div>
   );
